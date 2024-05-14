@@ -3,7 +3,7 @@ import os, time, json, csv
 from sklearn.utils import shuffle
 
 
-from FLKutils_min import compute_t, trainer, get_logflk_config, BuildSample_DY, normalize
+from utils import compute_t, trainer, get_logflk_config, BuildSample_DY, normalize
 
 output_path = './output_5d/'
 
