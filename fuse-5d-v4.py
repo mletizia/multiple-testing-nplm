@@ -59,7 +59,9 @@ if N_Sig:
 else: filename = f'Ntoys{Ntoys}_NR{N_ref}_NB{N_Bkg}_cut{cut_mll}_null'
 os.makedirs(output_path+filename, exist_ok = True)
 
-seeds = np.arange(Ntoys)*int(time.time()/1000000)
+rng = np.random.default_rng(seed=time.time_ns())
+seeds = rng.integers(0, high=1e8, size=10)
+
 with open(output_path+filename+"/seeds.txt", 'w') as f:
     for line in seeds.tolist():
         f.write(f"{line}\n")
