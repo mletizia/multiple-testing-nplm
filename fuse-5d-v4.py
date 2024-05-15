@@ -7,7 +7,7 @@ from falkon_utils import compute_t, trainer, get_logflk_config
 
 from utils import BuildSample_DY, normalize
 
-output_path = './output_5d/'
+output_path = './output_nest_5d/'
 
 tests = ['t','avg-f','avg-exp-f'] # ['t','avg-f','avg-exp-f']
 
@@ -16,13 +16,13 @@ tests = ['t','avg-f','avg-exp-f'] # ['t','avg-f','avg-exp-f']
 flk_sigmas =  [0.32,0.77,1.79,3.18,4.23]#1,10,50,90,99 percentiles
 M          = [10000,10000,10000,10000,10000]
 lam        = [1e-6,1e-6,1e-6,1e-6,1e-6]
-Ntoys      = 300
+Ntoys      = 1000
 
 # problem definition
 sig = 'EFT' # Z200, Z300, EFT, EFT2, EFT5
 N_ref      = 100000
 N_Bkg      = 20000
-N_Sig      = 41
+N_Sig      = 0
 weight    = N_Bkg*1./N_ref
 dim = 6
 tr_dim = 5
@@ -89,7 +89,7 @@ for i in range(Ntoys):
 
     # initialize dataset
     dataset = np.zeros(shape=(Ntot,dim), dtype=np.float64)
-    if 'EFT' in sig:
+    if 'EFT' in sig and N_Sig != 0:
         # fill with ref
         dataset[:N_ref,:] = BuildSample_DY(N_Events=N_ref, INPUT_PATH=reference_path, rng=rng) #['delta_phi', 'eta1', 'eta2', 'mll', 'pt1', 'pt2']
         # fill with bkg and signal
