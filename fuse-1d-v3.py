@@ -30,9 +30,10 @@ if N_Sig:
 else: filename = f'Ntoys{Ntoys}_NR{N_ref}_NB{N_Bkg}_null'
 os.makedirs(output_path+filename, exist_ok = True)
 
-#seeds = np.arange(Ntoys)*int(time.time()/1000000)
-seeds_nonres = np.loadtxt("/home/marcol/nplm-fuse/output_1d/Ntoys300_NR200000_NB2000_NS90_nonres/seeds.txt",dtype=int)
-seeds = seeds_nonres[-200:]
+rng = np.random.default_rng(seed=time.time_ns())
+seeds = rng.integers(0, high=1e8, size=Ntoys)
+#seeds_nonres = np.loadtxt("/home/marcol/nplm-fuse/output_1d/Ntoys300_NR200000_NB2000_NS90_nonres/seeds.txt",dtype=int)
+#seeds = seeds_nonres[-200:]
 
 with open(output_path+filename+"/seeds.txt", 'w') as f:
     for line in seeds.tolist():
