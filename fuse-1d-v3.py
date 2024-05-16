@@ -1,7 +1,9 @@
 import numpy as np
 import os, time, csv
 
-from FLKutils_min import compute_t, trainer, get_logflk_config, nonres_sig
+from falkon_utils import compute_t, trainer, get_logflk_config
+
+from utils import nonres_sig
 
 output_path = './output_1d/'
 
