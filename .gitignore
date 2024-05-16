@@ -4,5 +4,5 @@ __pycache__/
 old/
 output*/
 data/
-analysis*
+analysis-*.ipynb
 tests-5d.ipynb
