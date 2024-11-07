@@ -13,5 +13,8 @@ This is the code to reproduce the results of the paper
     year = "2024"
 }
 ```
+The aggregation methods are defined in the utils.py file.
+
+The notebook contains the computation of the results of the aggregated tests from the individual tests in the test_statistics folder.
 
 Contributors: Gaia Grosso and Marco Letizia
