@@ -15,6 +15,7 @@ This is the code to reproduce the results of the paper
 ```
 The aggregation methods are defined in the utils.py file.
 
-The notebook contains the computation of the results of the aggregated tests from the individual tests in the test_statistics folder.
+The notebook [powers](powers.ipynb) contains the computation of the results of the aggregated tests from the individual tests in the test_statistics folder.
+The notebook [correlations](correlations.ipynb) shows the degree of correlation among the base tests, each defined by a different value of the kernel width.
 
 Contributors: Gaia Grosso and Marco Letizia
