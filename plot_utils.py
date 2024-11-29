@@ -1,3 +1,4 @@
+import sys
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager
 plt.rcParams["font.family"] = "serif"
@@ -57,7 +58,7 @@ def plot_correlations(ref_folder, data_folders, tests_idx, labels_tests, output_
 
 
 
-def plot_power(files, tests, flk_sigmas, np_list, labels_plot, output_dir):
+def plot_power(files_dict, tests, flk_sigmas, labels_plot, output_dir):
 
 
     colors = ['#d0d1e6','#a6bddb','#67a9cf','#1c9099','#016c59', 'black']    
@@ -78,10 +79,10 @@ def plot_power(files, tests, flk_sigmas, np_list, labels_plot, output_dir):
     plot_legend=True
     plt_aggreg_min = True
 
-    ref = np.load(files[0])[:,tests]
+    ref = np.load(files_dict['ref'])[:,tests]
     
-    for idx,NP in enumerate(np_list):
-        data = np.load(files[idx])[:,tests]
+    for key in files_dict.keys():
+        data = np.load(files_dict[key])[:,tests]
 
         fig  = plt.figure(figsize=(7*(1+0.4*(plot_legend==1)),7))
         fig.patch.set_facecolor('white')
@@ -153,19 +154,37 @@ def plot_power(files, tests, flk_sigmas, np_list, labels_plot, output_dir):
         ax1.set_ylabel(r'${\rm P}(Z>Z_{\alpha})$', fontsize=24, fontname='serif')
         ax1.set_xlabel(r'$Z_{\alpha}$',      fontsize=24, fontname='serif')
         plt.grid(axis='y', lw=0.25, ls=':')
-        ax1.set_title(labels_plot[NP], fontsize=22, fontname='serif')
+        ax1.set_title(labels_plot[key], fontsize=22, fontname='serif')
         if plot_legend:
             ax1.legend(prop=font, loc='upper left', bbox_to_anchor=(1., 0.9),
                     frameon=False, ncol=1, numpoints=1)
         for axis in ['top','bottom','left','right']:
             ax1.spines[axis].set_linewidth(1) 
         if plot_legend and plt_aggreg_min:
-            fig.savefig(output_dir+'/power_%s_minp.pdf'%(NP))
+            fig.savefig(output_dir+'/power_%s_minp.pdf'%(key))
         elif plot_legend:
-            fig.savefig(output_dir+'/power_%s.pdf'%(NP))
+            fig.savefig(output_dir+'/power_%s.pdf'%(key))
         elif plt_aggreg_min:
-            fig.savefig(output_dir+'/power_%s_minp.pdf'%(NP))
+            fig.savefig(output_dir+'/power_%s_minp.pdf'%(key))
         else:
-            fig.savefig(output_dir+'/power_noleg_%s.pdf'%(NP))
+            fig.savefig(output_dir+'/power_noleg_%s.pdf'%(key))
         plt.show()
         plt.close()
+
+
+# Class to duplicate output to both console and file
+class Tee:
+    def __init__(self, filepath):
+        self.console = sys.stdout
+        self.file = open(filepath, "w")
+    
+    def write(self, message):
+        self.console.write(message)  # Write to the console
+        self.file.write(message)    # Write to the file
+    
+    def flush(self):
+        self.console.flush()
+        self.file.flush()
+    
+    def close(self):
+        self.file.close()

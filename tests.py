@@ -25,6 +25,58 @@ def power(t_ref,t_data,zalpha=[.5,1,2,2.5]):
     return p_to_z(alpha), power_list, err_list
     #return p_to_z(alpha), emp_pvalues_biased(t_data,quantiles)
 
+def holm_bonferroni(p_values, alpha=0.05):
+    """
+    Perform Holm-Bonferroni correction on correlated tests and check if at least one test rejects.
+    
+    Parameters:
+    - p_values (list or numpy array): List of p-values from multiple correlated hypothesis tests.
+    - alpha (float): Significance level. Default is 0.05.
+    
+    Returns:
+    - Boolean indicating if at least one hypothesis is rejected.
+    """
+    # Sort p-values in ascending order
+    sorted_indices = np.argsort(p_values)
+    sorted_p_values = np.array(p_values)[sorted_indices]
+    m = len(p_values)  # Number of hypotheses
+
+    # Apply Holm-Bonferroni correction
+    for i, p_val in enumerate(sorted_p_values):
+        # Adjust the threshold for Holm-Bonferroni
+        threshold = alpha / (m - i)
+        if p_val <= threshold:
+            # Early return if at least one test rejects
+            return 1
+    
+    # Return False if no rejections are found
+    return 0
+
+
+def holm_bonferroni_power(ref, data, Z=[2,3]):
+    """
+    Perform Holm-Bonferroni correction on correlated tests and check if at least one test rejects.
+    
+    Parameters:
+    - p_values (list or numpy array): List of p-values from multiple correlated hypothesis tests.
+    - alpha (float): Significance level. Default is 0.05.
+    
+    Returns:
+    - Boolean indicating if at least one hypothesis is rejected.
+    """
+    _, p_data = return_pvalues(ref,data)
+    
+    n, d = p_data.shape
+    output = []
+    for z in Z:
+        hb = []
+        for i in range(n):
+            hb.append(holm_bonferroni(p_data[i,:], alpha=z_to_p(z)))
+
+        passed = np.sum(hb)
+        output.append(ClopperPearson_interval(n, passed, level=0.68))
+
+    return output
 
 def min_p(ref,data):
     # ref: nxd numpy array
@@ -65,10 +117,6 @@ def fused_t(ref,data,T):
 
     return emp_pvalues(fused_ref,fused_data)
 
-def emp_pvalue_biased(ref,t):
-    # this definition is such that p=1/(N+1)!=0 if data is the most extreme value
-    p = np.count_nonzero(ref > t) / (len(ref)) #+ (np.count_nonzero(ref > t)==0)*1. / (len(ref)) 
-    return p
 
 def emp_pvalue(ref,t):
     # this definition is such that p=1/(N+1)!=0 if data is the most extreme value
@@ -78,8 +126,6 @@ def emp_pvalue(ref,t):
 def emp_pvalues(ref,data):
     return np.array([emp_pvalue(ref,t) for t in data])
 
-def emp_pvalues_biased(ref,data):
-    return np.array([emp_pvalue_biased(ref,t) for t in data])
 
 def p_to_z(pvals):
     return norm.ppf(1 - pvals)
@@ -96,36 +142,6 @@ def Zscore(ref,data):
 def fusion(x,T):
     return T * logsumexp(1/T*x, axis=1, b=1/x.shape[1])
 
-'''
-#def bootstrap_pn(pn,rng=None):
-
-    rnd = check_rng(rng)
-
-    return rnd.choice(pn,size=len(pn))
-
-#def bootstrap_pval(pn,t,rng=None):
-
-    return emp_pvalue(bootstrap_pn(pn,rng=rng),t)
-
-
-#def return_pvalues(ref,data,rng=None):
-    # ref: nxd numpy array
-    # data: mxd numpy array
-    p_ref = np.zeros_like(ref)
-    p_data = np.zeros_like(data)
-
-    # p-values under the null - loop over results for a given test - all values of t (col) for a given sigma (idx)
-    for idx, col in enumerate(np.transpose(ref)):
-        # for each t in col (all toys for a given sigma), compute p-value by bootstrapping col (the value of t is removed first)
-        p_ref[:,idx] = np.transpose([bootstrap_pval(np.delete(col,idx2),el,rng=rng) for idx2, el in enumerate(col)])
-
-    # p-values under the laternative - computed as usual for all values of t (col) for a given sigma (idx)
-    for idx, col in enumerate(np.transpose(data)):
-        p=emp_pvalues(np.transpose(ref)[idx],col)
-        p_data[:,idx] = np.transpose(p)
-
-    return p_ref, p_data
-'''
 
 def return_pvalues(ref,data):
     # ref: nxd numpy array
@@ -141,76 +157,6 @@ def return_pvalues(ref,data):
     # p-values under the laternative - computed as usual for all values of t (col) for a given sigma (idx)
     for idx, col in enumerate(np.transpose(data)):
         p=emp_pvalues(np.transpose(ref)[idx],col)
-        p_data[:,idx] = np.transpose(p)
-
-    return p_ref, p_data
-
-
-def return_pvalues_biased(ref,data):
-    # ref: nxd numpy array
-    # data: mxd numpy array
-    p_ref = np.zeros_like(ref)
-    p_data = np.zeros_like(data)
-
-    # p-values under the null - loop over results for a given test - all values of t (col) for a given sigma (idx)
-    for idx, col in enumerate(np.transpose(ref)):
-        # for each t in col (all toys for a given sigma), compute p-value with respect to the other ts
-        p_ref[:,idx] = np.transpose([emp_pvalue_biased(np.delete(col,idx2),el) for idx2, el in enumerate(col)])
-
-    # p-values under the alternative - computed as usual for all values of t (col) for a given sigma (idx)
-    for idx, col in enumerate(np.transpose(data)):
-        p=emp_pvalues_biased(np.transpose(ref)[idx],col)
-        p_data[:,idx] = np.transpose(p)
-
-    return p_ref, p_data
-
-
-def check_rng(rnd):
-    if isinstance(rnd, np.random._generator.Generator):
-        return rnd
-    elif rnd is None:
-        return np.random.default_rng(seed=rnd)
-    elif isinstance(rnd, int):
-        return np.random.default_rng(seed=rnd)
-    else: 
-        sys.exit("rnd must be None, an integer or an instance of np.random._generator.Generator")
-
-
-
-def return_pvalues_2(ref,data):
-    # ref: nxd numpy array
-    # data: mxd numpy array
-    p_ref = np.zeros_like(ref)
-    p_data = np.zeros_like(data)
-
-    # p-values under the null - loop over results for a given test - all values of t (col) for a given sigma (idx)
-    for idx, col in enumerate(np.transpose(ref)):
-        # for each t in col (all toys for a given sigma), compute p-value with respect to the other ts
-        p=emp_pvalues(col,col)
-        p_ref[:,idx] = np.transpose(p)
-
-    # p-values under the laternative - computed as usual for all values of t (col) for a given sigma (idx)
-    for idx, col in enumerate(np.transpose(data)):
-        p=emp_pvalues(np.transpose(ref)[idx],col)
-        p_data[:,idx] = np.transpose(p)
-
-    return p_ref, p_data
-
-def return_pvalues_2_biased(ref,data):
-    # ref: nxd numpy array
-    # data: mxd numpy array
-    p_ref = np.zeros_like(ref)
-    p_data = np.zeros_like(data)
-
-    # p-values under the null - loop over results for a given test - all values of t (col) for a given sigma (idx)
-    for idx, col in enumerate(np.transpose(ref)):
-        # for each t in col (all toys for a given sigma), compute p-value with respect to the other ts
-        p=emp_pvalues_biased(col,col)
-        p_ref[:,idx] = np.transpose(p)
-
-    # p-values under the laternative - computed as usual for all values of t (col) for a given sigma (idx)
-    for idx, col in enumerate(np.transpose(data)):
-        p=emp_pvalues_biased(np.transpose(ref)[idx],col)
         p_data[:,idx] = np.transpose(p)
 
     return p_ref, p_data
