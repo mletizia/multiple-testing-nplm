@@ -1,4 +1,4 @@
-# Multiple testing for signal-agnostic searches of new physics with machine learning
+# Multiple testing for signal-agnostic searches for new physics with machine learning
 
 This is the code to reproduce the results of the paper
 
